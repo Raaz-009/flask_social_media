@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <title>Dashboard</title>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <header>
+        <h1>Welcome, {{ current_user.username }}!</h1>
+    </header>
+
+    <section class="profile-section">
+        <div class="profile-info">
+            <img width="100px" height="500px" src="{{url_for('static',filename='images/Untitled.jpg')}}">
+            <p>File Path: {{ current_user.profile_picture }}</p>
+            <div class="user-bio">
+                <h2>Your Bio:</h2>
+                <p>{{ current_user.bio or 'No bio available' }}</p>
+            </div>
+        </div>
+        <div class="profile-form">
+            <h2>Edit Profile</h2>
+            <form action="{{ url_for('dashboard') }}" method="post" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                {{ form.bio.label }}
+                {{ form.bio }}
+                {{ form.profile_picture.label }}
+                {{ form.profile_picture }}
+                {{ form.submit }}
+            </form>
+        </div>
+    </section>
+    <!-- <img height="500px" width="500px" src="{{ url_for('static', filename='asset/Untitled.jpg') }}" alt=""> -->
+
+    <footer>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </footer>
+</div>
+
+</body>
+</html>
