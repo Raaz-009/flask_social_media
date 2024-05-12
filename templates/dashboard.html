@@ -15,11 +15,14 @@
 
     <section class="profile-section">
         <div class="profile-info">
-            <img width="100px" height="500px" src="{{url_for('static',filename='images/Untitled.jpg')}}">
-            <p>File Path: {{ current_user.profile_picture }}</p>
+            {% if current_user.profile_picture %}
+        <img width="100px" height="500px" src="{{ url_for('static', filename='images/' + current_user.profile_picture) }}">
+    {% else %}
+        <p>No profile picture available</p>
+    {% endif %}
             <div class="user-bio">
                 <h2>Your Bio:</h2>
-                <p>{{ current_user.bio or 'No bio available' }}</p>
+                <p>{{ current_user.bio }}</p>
             </div>
         </div>
         <div class="profile-form">

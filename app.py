@@ -1,4 +1,4 @@
-from flask import Flask, flash, render_template,redirect,url_for
+from flask import Flask, flash, render_template,redirect,url_for,request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin,login_manager,login_user,logout_user,login_required,current_user,LoginManager
 # from flask_wtf import wtforms this is removed by new update now its FlaskForm
@@ -8,6 +8,7 @@ from wtforms.validators import input_required,ValidationError,Length,Email
 from flask_bcrypt import Bcrypt
 from flask_wtf.file import FileField, FileAllowed
 from werkzeug.utils import secure_filename  
+import uuid as uuid
 import os
 #from flask_migrate import Migrate
 
@@ -66,7 +67,7 @@ class LoginForm(FlaskForm):
 
 #profile form
         
-UPLOAD_FOLDER = r'C:\website\flask_sm\static\images'  
+UPLOAD_FOLDER = r'static/images'  
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -78,7 +79,7 @@ class ProfileSetupForm(FlaskForm):
 
 
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 with app.app_context():
     db.create_all()
@@ -89,6 +90,7 @@ def home():
 
 
 #user login
+#user login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -96,9 +98,13 @@ def login():
         user = User.query.filter((User.username == form.usermail.data) | (User.email == form.usermail.data)).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
+            # Retrieve the user's bio from the database
+            bio_data = user.bio
             return redirect(url_for('dashboard'))
 
     return render_template('login.html', form=form)
+
+
 
 
 #dashboard after user succesfully logged in
@@ -108,18 +114,22 @@ def dashboard():
     form=ProfileSetupForm()
     if form.validate_on_submit:
         current_user.bio=form.bio.data
+        db.session.commit()
 
     if form.profile_picture.data:
-            # Handle profile picture upload
-            profile_picture = form.profile_picture.data
-            filename = secure_filename(profile_picture.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            profile_picture.save(file_path)
-            print("File Path:", file_path)
-            # Update the profile_picture field with the file path
-            current_user.profile_picture = file_path
-            db.session.commit()
-            flash('Profile updated successfully', 'success')
+        # Handle profile picture upload
+        profile_picture = form.profile_picture.data
+
+        filename = secure_filename(profile_picture.filename)
+        # Set uuid
+        pic_name = str(uuid.uuid1()) + "_" + filename
+        profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+        # Change it to a string to save to db
+        current_user.profile_picture = pic_name
+        db.session.commit()
+        flash('Profile updated successfully', 'success')
+            #saver.save
+            #flash('Profile updated successfully', 'success')
     return render_template('/dashboard.html',form=form)
 
 #default page
@@ -139,14 +149,27 @@ def register_user():
 
     return render_template('register.html', form=form)
 
-@app.route('/logout',methods=['GET','POST'])
+@app.route('/logout', methods=['GET','POST'])
 @login_required
 def logout():
+    form = ProfileSetupForm(request.form)  # Create form object to access form data
+    if form.validate_on_submit():
+        # Update the user's bio data in the database
+        current_user.bio = form.bio.data
+        db.session.commit()
+    
     logout_user()
     return redirect(url_for('login'))
+
+
 
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 app.config['SQLALCHEMY_ECHO'] = True
+
+
+
+
+## the bio data has some bug
