@@ -1,17 +1,14 @@
-from flask import Flask, flash, render_template,redirect,url_for,request
+from flask import Flask, flash, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin,login_manager,login_user,logout_user,login_required,current_user,LoginManager
-# from flask_wtf import wtforms this is removed by new update now its FlaskForm
+from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,SubmitField,TextAreaField,FileField
-from wtforms.validators import input_required,ValidationError,Length,Email
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FileField
+from wtforms.validators import InputRequired, ValidationError, Length, Email
 from flask_bcrypt import Bcrypt
-from flask_wtf.file import FileField, FileAllowed
-from werkzeug.utils import secure_filename  
-import uuid as uuid
+from flask_wtf.file import FileAllowed
+from werkzeug.utils import secure_filename
+import uuid
 import os
-#from flask_migrate import Migrate
-
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
@@ -19,29 +16,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'secretkey'
 
 db = SQLAlchemy(app)
-bcrypt=Bcrypt(app)
+bcrypt = Bcrypt(app)
 
-login_manager=LoginManager()
+login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view="Login"
+login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), nullable=False,unique=True)
+    username = db.Column(db.String(20), nullable=False, unique=True)
     email = db.Column(db.String(540), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
     bio = db.Column(db.Text, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=True)
 
 class RegisterForm(FlaskForm):
-    username = StringField(validators=[input_required(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
-    email = StringField(validators=[input_required(), Email(), Length(min=7, max=50)], render_kw={"placeholder": "Email"})
-    password = PasswordField(validators=[input_required(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
+    username = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
+    email = StringField(validators=[InputRequired(), Email(), Length(min=7, max=50)], render_kw={"placeholder": "Email"})
+    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
     submit = SubmitField("Register")
 
     def validate_username(self, username):
@@ -55,31 +51,24 @@ class RegisterForm(FlaskForm):
             raise ValidationError("The email already exists, please choose a different one")
 
 class LoginForm(FlaskForm):
-    usermail = StringField(validators=[input_required(), Length(min=4, max=20)], render_kw={"placeholder": "username or email"})
-    password = PasswordField(validators=[input_required(), Length(min=4, max=20)], render_kw={"placeholder": "password"})
+    usermail = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username or Email"})
+    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
     submit = SubmitField("Login")
 
     def validate_usermail(self, usermail):
         user = User.query.filter((User.username == usermail.data) | (User.email == usermail.data)).first()
-
         if not user or not bcrypt.check_password_hash(user.password, self.password.data):
             raise ValidationError("Invalid username, email, or password")
 
-#profile form
-        
-UPLOAD_FOLDER = r'static/images'  
+UPLOAD_FOLDER = r'static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-        
+
 class ProfileSetupForm(FlaskForm):
     bio = TextAreaField('Bio', render_kw={"placeholder": "Tell us about yourself"})
     profile_picture = FileField('Profile Picture', validators=[FileAllowed(ALLOWED_EXTENSIONS, 'Only images allowed')])
     submit = SubmitField('Save Changes')
-
-
-
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 with app.app_context():
     db.create_all()
@@ -88,9 +77,6 @@ with app.app_context():
 def home():
     return render_template('home.html')
 
-
-#user login
-#user login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -98,41 +84,28 @@ def login():
         user = User.query.filter((User.username == form.usermail.data) | (User.email == form.usermail.data)).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
-            # Retrieve the user's bio from the database
-            bio_data = user.bio
             return redirect(url_for('dashboard'))
-
     return render_template('login.html', form=form)
 
-
-
-
-#dashboard after user succesfully logged in
-@app.route('/dashboard',methods=['GET','POST'])
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    form=ProfileSetupForm()
-    if form.validate_on_submit:
-        current_user.bio=form.bio.data
-        db.session.commit()
-
-    if form.profile_picture.data:
-        # Handle profile picture upload
-        profile_picture = form.profile_picture.data
-
-        filename = secure_filename(profile_picture.filename)
-        # Set uuid
-        pic_name = str(uuid.uuid1()) + "_" + filename
-        profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
-        # Change it to a string to save to db
-        current_user.profile_picture = pic_name
+    form = ProfileSetupForm()
+    if form.validate_on_submit():
+        current_user.bio = form.bio.data
+        if form.profile_picture.data:
+            profile_picture = form.profile_picture.data
+            filename = secure_filename(profile_picture.filename)
+            pic_name = str(uuid.uuid1()) + "_" + filename
+            profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+            current_user.profile_picture = pic_name
         db.session.commit()
         flash('Profile updated successfully', 'success')
-            #saver.save
-            #flash('Profile updated successfully', 'success')
-    return render_template('/dashboard.html',form=form)
+        return redirect(url_for('dashboard'))
+    elif request.method == 'GET':
+        form.bio.data = current_user.bio
+    return render_template('dashboard.html', form=form)
 
-#default page
 @app.route('/register', methods=['GET', 'POST'])
 def register_user():
     form = RegisterForm()
@@ -144,32 +117,13 @@ def register_user():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
-    # Print form validation errors to diagnose the issue
-    print(form.errors)
-
-    return render_template('register.html', form=form)
-
-@app.route('/logout', methods=['GET','POST'])
+@app.route('/logout')
 @login_required
 def logout():
-    form = ProfileSetupForm(request.form)  # Create form object to access form data
-    if form.validate_on_submit():
-        # Update the user's bio data in the database
-        current_user.bio = form.bio.data
-        db.session.commit()
-    
     logout_user()
     return redirect(url_for('login'))
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
 
 app.config['SQLALCHEMY_ECHO'] = True
-
-
-
-
-## the bio data has some bug
