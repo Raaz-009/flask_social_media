@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Post Photo</h2>
+    <form method="POST" action="{{ url_for('post_photo') }}" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div>{{ form.photo.label }} {{ form.photo }}</div>
+        <div>{{ form.caption.label }} {{ form.caption }}</div>
+        <div>{{ form.submit }}</div>
+    </form>
+{% endblock %}

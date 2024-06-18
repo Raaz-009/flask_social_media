@@ -1,4 +1,4 @@
-from flask import Flask, flash, render_template, redirect, url_for, request
+from flask import Flask, flash, render_template, redirect, url_for, request,abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
@@ -26,6 +26,8 @@ login_manager.login_view = "login"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
+#Class for user details and login
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
@@ -33,6 +35,19 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(80), nullable=False)
     bio = db.Column(db.Text, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=True)
+    posts = db.relationship('Post', backref='author', lazy=True)   #for posts 
+
+
+#class for user posts
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    image_filename = db.Column(db.String(255), nullable=False)  # Ensure this line exists
+    caption = db.Column(db.Text)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+with app.app_context():
+    db.create_all()
+
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
@@ -60,6 +75,20 @@ class LoginForm(FlaskForm):
         if not user or not bcrypt.check_password_hash(user.password, self.password.data):
             raise ValidationError("Invalid username, email, or password")
 
+
+#form for deleting and adding posts
+
+class PostForm(FlaskForm):
+    photo = FileField('Photo', validators=[InputRequired(), FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')])
+    caption = TextAreaField('Caption', validators=[Length(max=255)])
+    submit = SubmitField('Post')
+
+class DeletePostForm(FlaskForm):
+    submit = SubmitField('Delete')
+
+
+
+
 UPLOAD_FOLDER = r'static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
@@ -70,8 +99,8 @@ class ProfileSetupForm(FlaskForm):
     profile_picture = FileField('Profile Picture', validators=[FileAllowed(ALLOWED_EXTENSIONS, 'Only images allowed')])
     submit = SubmitField('Save Changes')
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 @app.route('/')
 def home():
@@ -86,6 +115,7 @@ def login():
             login_user(user)
             return redirect(url_for('dashboard'))
     return render_template('login.html', form=form)
+
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
@@ -104,7 +134,11 @@ def dashboard():
         return redirect(url_for('dashboard'))
     elif request.method == 'GET':
         form.bio.data = current_user.bio
-    return render_template('dashboard.html', form=form)
+
+    posts = Post.query.filter_by(user_id=current_user.id).all()
+    delete_form = DeletePostForm()
+    return render_template('dashboard.html', form=form, posts=posts, delete_form=delete_form)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_user():
@@ -116,6 +150,42 @@ def register_user():
         db.session.commit()
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
+
+
+#post photo route
+@app.route('/post_photo', methods=['GET', 'POST'])
+@login_required
+def post_photo():
+    form = PostForm()
+    if form.validate_on_submit():
+        photo = form.photo.data
+        filename = secure_filename(photo.filename)
+        pic_name = str(uuid.uuid1()) + "_" + filename
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+        
+        new_post = Post(
+            image_filename=pic_name,
+            caption=form.caption.data,
+            user_id=current_user.id
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        flash('Photo posted successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('post.html', form=form)
+
+
+@app.route('/delete_post/<int:post_id>', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id:
+        abort(403)  # Forbidden
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 @login_required
