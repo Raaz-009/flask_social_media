@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='user_dashboard.css') }}">
+<div class="dashboard-container">
+    <div class="profile-details">
+        <div class="profile-header">
+            <h2>{{ user.username }}'s Dashboard</h2>
+            {% if user != current_user %}
+                <div class="follow-btn-container">
+                    {% if user in current_user.following %}
+                        <form method="POST" action="{{ url_for('unfollow', user_id=user.id) }}">
+                            <button type="submit" class="unfollow-btn">Unfollow</button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('follow', user_id=user.id) }}">
+                            <button type="submit" class="follow-btn">Follow</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="profile-summary">
+            <div class="profile-image">
+                {% if user.profile_picture %}
+                    <img src="{{ url_for('static', filename='images/' + user.profile_picture) }}" alt="Profile Picture">
+                {% else %}
+                    <p>No profile picture available</p>
+                {% endif %}
+            </div>
+            <div class="bio">
+                <h3>Bio</h3>
+                <p>{{ user.bio }}</p>
+            </div>
+            <div class="counts">
+                <div class="followers">
+                    <h3>Followers</h3>
+                    <p>{{ followers_count }}</p>
+                </div>
+                <div class="following">
+                    <h3>Following</h3>
+                    <p>{{ following_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="posts">
+        <h3>Posts</h3>
+        <div class="posts-container">
+            {% for post in posts %}
+                <div class="post-item">
+                    <img src="{{ url_for('static', filename='images/' + post.image_filename) }}" alt="Post Image">
+                    <h4>{{ post.title }}</h4>
+                    <p>{{ post.content }}</p>
+                    {% if post.caption %}
+                        <p><strong>Caption:</strong> {{ post.caption }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

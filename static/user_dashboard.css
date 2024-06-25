@@ -1,0 +1,145 @@
+/* user_dashboard.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-details {
+    background-color: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-header h2 {
+    margin: 0;
+}
+
+.follow-btn-container {
+    display: flex;
+    align-items: center;
+}
+
+.follow-btn-container .follow-btn {
+    margin-left: 10px;
+}
+
+.profile-summary {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-image {
+    margin-right: 20px;
+}
+
+.profile-image img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid #007bff;
+}
+
+.bio {
+    flex: 1;
+}
+
+.counts {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.counts > div {
+    margin-right: 40px;
+}
+
+.posts {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.posts h3 {
+    margin-top: 0;
+}
+
+.posts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.post-item {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post-item img {
+    max-width: 100%;
+    max-height: 200px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+.follow-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.unfollow-btn {
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.unfollow-btn:hover {
+    background-color: #c82333;
+}
+
+@media (max-width: 768px) {
+    .follow-btn-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .follow-btn-container .follow-btn {
+        margin-top: 10px;
+        margin-left: 0;
+    }
+    
+    .follow-btn-container-mobile {
+        display: none; /* Hide for smaller screens */
+    }
+}

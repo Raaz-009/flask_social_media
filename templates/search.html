@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='search.css') }}">
+    <div class="search-container">
+        <h2>Search Users</h2>
+        <form id="search-form" method="POST" action="{{ url_for('search') }}">
+            <input type="text" id="search-input" name="search_term" placeholder="Search for users">
+            <button type="submit">Search</button>
+        </form>
+        <h3>Results</h3>
+        <div id="search-results">
+            {% for user in users %}
+                <div class="user-result">
+                    <a href="{{ url_for('user_profile', username=user.username) }}">{{ user.username }}</a>
+                    {% if user in current_user.following %}
+                        <form method="POST" action="{{ url_for('unfollow', user_id=user.id) }}">
+                            <button type="submit" class="unfollow-btn">Unfollow</button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('follow', user_id=user.id) }}">
+                            <button type="submit" class="follow-btn">Follow</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('search-form');
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                const userElements = searchResults.getElementsByClassName('user-result');
+
+                Array.from(userElements).forEach(function(userElement) {
+                    const username = userElement.querySelector('a').textContent.toLowerCase();
+                    if (username.includes(searchTerm)) {
+                        userElement.style.display = 'block';
+                    } else {
+                        userElement.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -6,6 +6,58 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
     <title>Dashboard</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .profile-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .profile-info {
+            display: flex;
+            align-items: center;
+        }
+        .profile-info img {
+            border-radius: 50%;
+            border: 2px solid #007bff;
+        }
+        .profile-info .user-details {
+            margin-left: 20px;
+        }
+        .profile-info .user-bio {
+            margin-top: 10px;
+        }
+        .profile-info .user-stats {
+            display: flex;
+            gap: 20px;
+            margin-left: 20px;
+        }
+        .profile-info .user-stats div {
+            text-align: center;
+        }
+        .profile-info .user-stats div p {
+            margin: 0;
+        }
         .posts-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -13,21 +65,102 @@
             margin-top: 20px;
         }
         .post-item {
+            background-color: white;
             border: 1px solid #ccc;
+            border-radius: 8px;
             padding: 10px;
             text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .post-item img {
             max-width: 100%;
             max-height: 200px;
             display: block;
             margin: 0 auto;
+            border-radius: 8px;
         }
         .post-item p {
             margin-top: 10px;
         }
         .delete-form {
             margin-top: 10px;
+        }
+        .delete-form button {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-form button:hover {
+            background-color: #cc0000;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        footer a {
+            margin: 0 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        .action-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .action-buttons a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .action-buttons a:hover {
+            background-color: #0056b3;
+        }
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover, .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -45,26 +178,50 @@
             {% else %}
                 <p>No profile picture available</p>
             {% endif %}
-            <div class="user-bio">
-                <h2>Your Bio:</h2>
-                <p>{{ current_user.bio }}</p>
+            <div class="user-details">
+                <div class="user-bio">
+                    <h2>Your Bio:</h2>
+                    <p>{{ current_user.bio }}</p>
+                </div>
+                <div class="user-stats">
+                    <div>
+                        <p><strong>{{ followers_count }}</strong></p>
+                        <p>Followers</p>
+                    </div>
+                    <div>
+                        <p><strong>{{ following_count }}</strong></p>
+                        <p>Following</p>
+                    </div>
+                </div>
             </div>
+            <button onclick="document.getElementById('editProfileModal').style.display='block'" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Edit Profile</button>
         </div>
-        <div class="profile-form">
-            <h2>Edit Profile</h2>
+    </section>
+
+    <!-- Modal for editing profile -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Profile</h2>
+                <span class="close" onclick="document.getElementById('editProfileModal').style.display='none'">&times;</span>
+            </div>
             <form action="{{ url_for('dashboard') }}" method="post" enctype="multipart/form-data">
                 {{ form.hidden_tag() }}
-                {{ form.bio.label }}
+                <label for="bio">{{ form.bio.label }}</label>
                 {{ form.bio }}
-                {{ form.profile_picture.label }}
+                <label for="profile_picture">{{ form.profile_picture.label }}</label>
                 {{ form.profile_picture }}
                 {{ form.submit }}
             </form>
         </div>
-    </section>
+    </div>
 
-    <a href="{{ url_for('post_photo') }}">Post Photo</a>
-    
+    <div class="action-buttons">
+        <a href="{{ url_for('post_photo') }}">Post Photo</a>
+        <a href="{{ url_for('search') }}">Search</a>
+        <a href="{{ url_for('feed') }}">Feed</a>
+    </div>
+
     <h3>Your Posts</h3>
     <div class="posts-container">
         {% for post in current_user.posts %}
@@ -83,6 +240,16 @@
         <a href="{{ url_for('logout') }}">Logout</a>
     </footer>
 </div>
+
+<script>
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        var modal = document.getElementById('editProfileModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 
 </body>
 </html>

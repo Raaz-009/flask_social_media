@@ -1,0 +1,16 @@
+{% for user in users %}
+    <div class="user-result">
+        <a href="{{ url_for('user_profile', username=user.username) }}">{{ user.username }}</a>
+        {% if user in current_user.following %}
+            <form method="POST" action="{{ url_for('unfollow', user_id=user.id) }}" class="unfollow-form">
+                <button type="submit" class="unfollow-btn">Unfollow</button>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('follow', user_id=user.id) }}" class="follow-form">
+                <button type="submit" class="follow-btn">Follow</button>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            </form>
+        {% endif %}
+    </div>
+{% endfor %}

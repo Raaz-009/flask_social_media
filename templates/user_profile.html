@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='profile.css') }}">
+<div class="profile-container">
+    <div class="profile-header">
+        <h2>{{ user.username }}'s Profile</h2>
+        {% if user != current_user %}
+            {% if user in current_user.following %}
+                <form method="POST" action="{{ url_for('unfollow', user_id=user.id) }}">
+                    <button type="submit" class="unfollow-btn">Unfollow</button>
+                </form>
+            {% else %}
+                <form method="POST" action="{{ url_for('follow', user_id=user.id) }}">
+                    <button type="submit" class="follow-btn">Follow</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="profile-details">
+        <div class="bio">
+            <h3>Bio</h3>
+            <p>{{ user.bio }}</p>
+        </div>
+        <div class="counts">
+            <div class="followers">
+                <h3>Followers</h3>
+                <p>{{ user.followers.count() }}</p>
+            </div>
+            <div class="following">
+                <h3>Following</h3>
+                <p>{{ user.following.count() }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="posts">
+        <h3>Posts</h3>
+        {% for post in posts %}
+            <div class="post-item">
+                <h4>{{ post.title }}</h4>
+                <p>{{ post.content }}</p>
+                <p><strong>Caption:</strong> {{ post.caption }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
