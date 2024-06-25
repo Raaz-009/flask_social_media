@@ -281,7 +281,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-if __name__ == '__main__':
-    app.run(port=5001)
+# if __name__ == '__main__':
+#     app.run(port=5001)
 
 app.config['SQLALCHEMY_ECHO'] = True
