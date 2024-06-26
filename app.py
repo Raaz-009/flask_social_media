@@ -281,7 +281,8 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# if __name__ == '__main__':
-#     app.run(port=5001)
+# from waitress import serve
+if __name__ == '__main__':
+    app.run(host="0.0.0.0",port=4000)
 
 app.config['SQLALCHEMY_ECHO'] = True
